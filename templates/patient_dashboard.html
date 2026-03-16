@@ -1,0 +1,165 @@
+{% extends "base.html" %}
+
+{% block title %}Patient Dashboard{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+
+    <h1 class="h3 mb-4 text-gray-800">
+        <i class="fas fa-home"></i> {{ patient.name }}'s Dashboard
+    </h1>
+
+    {# FIXED: Removed duplicate flash rendering #}
+    {% for category, message in get_flashed_messages(with_categories=true) %}
+        <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+            {{ message }}
+            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                <span aria-hidden="true">&times;</span>
+            </button>
+        </div>
+    {% endfor %}
+
+    <div class="row mb-4">
+        <div class="col-xl-4 col-lg-5">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3 bg-info text-white">
+                    <h6 class="m-0 font-weight-bold">Patient Details</h6>
+                </div>
+                <div class="card-body">
+                    {% if patient.qr_code_path %}
+                    <div class="text-center mb-3">
+                        <img src="{{ url_for('serve_qrcode', filename=patient.patient_id + '.png') }}" alt="QR Code" style="width:150px; height:150px; border: 1px solid #ddd;">
+                    </div>
+                    {% endif %}
+                    <p><strong>Patient ID:</strong> <span class="badge badge-primary">{{ patient.patient_id }}</span></p>
+                    <p><strong>Date of Birth:</strong> {{ patient.dob }} (Age: {{ calculate_age(patient.dob) }})</p>
+                    <p><strong>Address:</strong> {{ patient.address or 'N/A' }}</p>
+                    <p><strong>Hospital:</strong> {{ user.hospital_name }} ({{ user.hospital_id }})</p>
+                    <hr>
+                    {% if assigned_doctor %}
+                    <p><strong>Primary Doctor:</strong> Dr. {{ assigned_doctor.name }}</p>
+                    <p><strong>Specialization:</strong> {{ assigned_doctor.specialization }}</p>
+                    {% else %}
+                    <p class="text-danger">No primary doctor assigned.</p>
+                    {% endif %}
+                    <a href="{{ url_for('my_profile') }}" class="btn btn-sm btn-outline-secondary mt-2">
+                        <i class="fas fa-user-edit"></i> Edit Profile 
+                    </a>
+                    <a href="{{ url_for('book_appointment') }}" class="btn btn-sm btn-outline-primary mt-2">
+                        <i class="fas fa-calendar-alt"></i> Book Appointment
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-8 col-lg-7">
+
+            <div class="card shadow mb-4 border-left-danger">
+                <div class="card-header py-3 bg-danger text-white">
+                    <h6 class="m-0 font-weight-bold"><i class="fas fa-pills me-1"></i> Active Medication Schedule</h6>
+                </div>
+                <div class="card-body">
+                    {% if scheduled_doses %}
+                        {% if missed_doses_alert %}
+                        <div class="alert alert-warning text-center">
+                            <i class="fas fa-exclamation-triangle me-1"></i> **Alert:** You have missed logging at least one scheduled pill for today. Please log it now.
+                        </div>
+                        {% endif %}
+                        <div class="table-responsive">
+                            <table class="table table-bordered" id="medicationTable" width="100%" cellspacing="0">
+                                <thead>
+                                    <tr>
+                                        <th>Drug Name</th>
+                                        <th>Dosage</th>
+                                        <th>Timing</th>
+                                        <th>Status</th>
+                                        <th>Action</th>
+                                        <th>Intake Logs</th>
+                                        <th>End Date</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for dose in scheduled_doses %}
+                                        {% set required_hour = get_timing_hour(dose.timing_slot) %}
+                                        <tr class="{% if required_hour < now().hour and not dose.taken_today %}table-warning{% endif %}">
+                                            <td><strong>{{ dose.drug_name }}</strong></td>
+                                            <td>{{ dose.dosage }}</td>
+                                            <td>{{ dose.timing_slot }}</td>
+                                            <td>
+                                                {% if dose.taken_today %}
+                                                    <span class="badge bg-success"><i class="fas fa-check-circle"></i> Taken</span>
+                                                {% elif required_hour < now().hour %}
+                                                    <span class="badge bg-danger"><i class="fas fa-exclamation-triangle"></i> Missed?</span>
+                                                {% else %}
+                                                    <span class="badge bg-primary"><i class="fas fa-clock"></i> Scheduled</span>
+                                                {% endif %}
+                                            </td>
+                                            <td>
+                                                {% if not dose.taken_today %}
+                                                    <form method="POST" action="{{ url_for('log_pill_intake', schedule_id=dose.id) }}" style="display:inline;">
+                                                        <button type="submit" class="btn btn-sm btn-primary" onclick="return confirm('Log intake for {{ dose.drug_name }} now?')">
+                                                            <i class="fas fa-pills"></i> Mark as Taken
+                                                        </button>
+                                                    </form>
+                                                {% endif %}
+                                            </td>
+                                            <td>
+                                                {% for log in dose.intake_logs %}
+                                                    <span class="badge bg-secondary me-1">{{ log }}</span>
+                                                {% endfor %}
+                                            </td>
+                                            <td>{{ dose.end_date.strftime('%Y-%m-%d') }}</td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <div class="alert alert-info text-center mb-0">
+                            No active medication schedule found.
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="card shadow mb-4">
+                <div class="card-header py-3 bg-warning text-white">
+                    <h6 class="m-0 font-weight-bold"><i class="fas fa-history me-1"></i> Health Records History</h6>
+                </div>
+                <div class="card-body">
+                    {% if records %}
+                        <div class="accordion" id="recordsAccordion">
+                        {% for record in records %}
+                            <div class="card">
+                                <div class="card-header py-2" id="heading{{ loop.index }}">
+                                    <h2 class="mb-0">
+                                        <button class="btn btn-link btn-block text-left py-1 text-decoration-none" type="button" data-toggle="collapse" data-target="#collapse{{ loop.index }}" aria-expanded="false" aria-controls="collapse{{ loop.index }}">
+                                            <i class="fas fa-calendar-alt"></i> Consultation on {{ record.created_at.strftime('%Y-%m-%d') }} by Dr. {{ record.doctor_name or 'N/A' }} ({{ record.specialization or 'N/A' }})
+                                        </button>
+                                    </h2>
+                                </div>
+                                <div id="collapse{{ loop.index }}" class="collapse" aria-labelledby="heading{{ loop.index }}" data-parent="#recordsAccordion">
+                                    <div class="card-body">
+                                        <h5>Doctor Notes:</h5>
+                                        <p class="alert alert-light">{{ record.notes | nl2br }}</p>
+
+                                        {% if record.pill_schedule %}
+                                        <h6>Legacy Pill Schedule:</h6>
+                                        <p class="text-muted">{{ record.pill_schedule | nl2br }}</p>
+                                        {% endif %}
+
+                                        <small class="text-muted">Record ID: {{ record.id }}</small>
+                                    </div>
+                                </div>
+                            </div>
+                        {% endfor %}
+                        </div>
+                    {% else %}
+                        <p class="text-info">No previous health records found.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

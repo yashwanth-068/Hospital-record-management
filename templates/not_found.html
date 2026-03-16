@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+
+{% block title %}System Error{% endblock %}
+
+{% block content %}
+    <div class="row justify-content-center">
+        <div class="col-md-10 text-center py-5">
+            <h1 class="display-1 text-danger fw-bold mb-0">404 / Error</h1>
+            <p class="lead text-muted mb-5">System Encountered a Problem</p>
+
+            <div class="card shadow-lg p-4 bg-light">
+                <div class="card-body">
+                    <h3 class="text-dark mb-4"><i class="bi bi-exclamation-triangle-fill text-danger me-2"></i>{{ error_msg|default("The resource or page you requested could not be found.") }}</h3>
+                    
+                    <p class="fs-5 text-dark">
+                        This issue often occurs because of:
+                    </p>
+                    <ul class="list-unstyled mx-auto" style="max-width: 400px; text-align: left;">
+                        <li><i class="bi bi-x-circle-fill text-danger me-2"></i> An expired session or unauthorized access attempt.</li>
+                        <li><i class="bi bi-x-circle-fill text-danger me-2"></i> A broken or incorrect link/URL.</li>
+                        <li><i class="bi bi-x-circle-fill text-danger me-2"></i> The page was temporarily moved or deleted.</li>
+                    </ul>
+                    <hr>
+                    <h5 class="text-secondary">Recommended Action</h5>
+                    <p>Please use the navigation sidebar or return to the main dashboard.</p>
+                    
+                    <a href="{{ url_for('dashboard') }}" class="btn btn-primary btn-lg mt-3 me-3">
+                        <i class="bi bi-house-door-fill me-2"></i>Go to Dashboard
+                    </a>
+                    <a href="#" class="btn btn-outline-secondary btn-lg mt-3" onclick="window.history.back();">
+                        <i class="bi bi-arrow-left-circle me-2"></i>Go Back
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="mt-5 pt-3 border-top">
+        <p class="text-muted small text-center">If this error persists, please contact your system administrator and reference the error code.</p>
+    </div>
+{% endblock %}

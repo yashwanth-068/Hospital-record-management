@@ -1,0 +1,103 @@
+{% extends "base.html" %}
+
+{% block title %}Patient Registry Search{% endblock %}
+
+{% block content %}
+    <header class="page-header mb-4 pb-2 border-bottom">
+        <h1 class="h3 mb-0 text-secondary"><i class="bi bi-search me-2"></i>Patient Registry Lookup</h1>
+        <p class="text-muted">Search for any patient card within the **{{ user.hospital_name }}** system using their ID, full name, or Date of Birth.</p>
+    </header>
+
+    <div class="card shadow-lg mb-5 border-secondary">
+        <div class="card-header bg-light">
+            <h5 class="mb-0"><i class="bi bi-funnel me-1"></i> Search Criteria</h5>
+        </div>
+        <div class="card-body">
+            <form method="GET" action="{{ url_for('search_patient') }}" class="needs-validation" novalidate>
+                <div class="row g-3 align-items-end">
+                    <div class="col-md-5">
+                        <label for="query" class="form-label">Search Term (ID or Name)</label>
+                        <input type="text" class="form-control form-control-lg" id="query" name="query" value="{{ request.args.get('query', '') }}" required placeholder="e.g., PNT1001 or Jane Doe">
+                    </div>
+                    <div class="col-md-4">
+                        <label for="search_by" class="form-label">Filter By</label>
+                        <select class="form-select" id="search_by" name="search_by">
+                            <option value="id" {% if request.args.get('search_by') == 'id' %}selected{% endif %}>Patient ID</option>
+                            <option value="name" {% if request.args.get('search_by') == 'name' %}selected{% endif %}>Patient Full Name</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3 d-grid">
+                        <button type="submit" class="btn btn-secondary btn-lg">
+                            <i class="bi bi-binoculars me-2"></i>Execute Search
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    {% if results is not none %}
+        <section class="search-results">
+            <h3 class="mb-3 text-primary"><i class="bi bi-list-columns me-2"></i>Search Results ({{ results|length }} Found)</h3>
+
+            {% if results %}
+                <div class="card shadow-sm">
+                    <div class="card-body p-0">
+                        <div class="table-responsive">
+                            <table class="table table-hover table-striped mb-0 align-middle">
+                                <thead class="table-dark">
+                                    <tr>
+                                        <th scope="col">Patient ID</th>
+                                        <th scope="col">Full Name</th>
+                                        <th scope="col">Age</th>
+                                        <th scope="col">Primary Doctor</th>
+                                        <th scope="col">Card Created</th>
+                                        <th scope="col">Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for patient in results %}
+                                        <tr>
+                                            <td><span class="badge bg-primary">{{ patient.patient_id }}</span></td>
+                                            <td>{{ patient.name }}</td>
+                                            <td>{{ calculate_age(patient.dob) }} years</td> 
+                                            <td>
+                                                {% if patient.assigned_doctor_name %}
+                                                    <span class="text-success fw-bold">Dr. {{ patient.assigned_doctor_name }}</span>
+                                                {% else %}
+                                                    <span class="text-muted">Unassigned</span>
+                                                {% endif %}
+                                            </td>
+                                            <td>{{ patient.created_at.strftime('%Y-%m-%d') }}</td>
+                                            <td>
+                                                <a href="{{ url_for('doctor_patient_view', patient_id=patient.patient_id) }}" class="btn btn-sm btn-outline-success">
+                                                    <i class="bi bi-file-medical"></i> View Card
+                                                </a>
+                                            </td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            {% else %}
+                <div class="alert alert-warning text-center p-4">
+                    <h4 class="alert-heading"><i class="bi bi-x-octagon me-2"></i> No Matching Records</h4>
+                    <p>The system could not find any patient matching the criteria for **{{ request.args.get('search_by')|capitalize }}** with the query: 
+                       <code class="fw-bold">{{ request.args.get('query', 'N/A') }}</code>.</p>
+                    <p class="mb-0">Please check the spelling or try searching by the other criteria (ID or Name).</p>
+                </div>
+            {% endif %}
+        </section>
+    {% else %}
+        <div class="alert alert-info text-center p-4">
+            <h4 class="alert-heading"><i class="bi bi-info-circle me-2"></i> Ready to Search</h4>
+            <p class="mb-0">Enter a Patient ID or a full name in the box above and click "Execute Search" to begin.</p>
+        </div>
+    {% endif %}
+    
+    <div class="mt-5 pt-3 border-top">
+        <p class="text-muted small">Note: All search actions are logged for auditing purposes.</p>
+    </div>
+{% endblock %}

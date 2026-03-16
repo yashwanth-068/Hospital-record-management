@@ -1,0 +1,185 @@
+{% extends "base.html" %}
+{% block title %}Clinical View: {{ patient.name }}{% endblock %}
+
+{% block content %}
+<br>
+<br>
+<div class="container mt-4">
+    <header class="page-header d-flex justify-content-between align-items-center mb-4 pb-2 border-bottom">
+        <h1 class="h3 mb-0 text-success"><i class="bi bi-person-lines-fill me-2"></i>Clinical Record: {{ patient.name }}</h1>
+        <a href="{{ url_for('doctor_dashboard') }}" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left-circle me-1"></i> Back to Patient Panel
+        </a>
+    </header>
+
+    <div class="row g-4">
+        
+        <div class="col-lg-4">
+            <div class="card shadow-sm mb-4 border-success">
+                <div class="card-header bg-success text-white">
+                    <h5 class="mb-0">Patient Demographics</h5>
+                </div>
+                <ul class="list-group list-group-flush">
+                    <li class="list-group-item"><strong>Card ID:</strong> <span class="badge bg-success">{{ patient.patient_id }}</span></li>
+                    <li class="list-group-item"><strong>Date of Birth:</strong> {{ patient.dob|default('N/A') }}</li>
+                    <li class="list-group-item"><strong>Age:</strong> {{ calculate_age(patient.dob) }} years</li>
+                    <li class="list-group-item"><strong>Gender:</strong> {{ patient.gender|default('N/A') }}</li>
+                    <li class="list-group-item"><strong>Blood Type:</strong> <span class="badge bg-danger">{{ patient.blood_type|default('N/A') }}</span></li>
+                    <li class="list-group-item"><strong>Contact:</strong> {{ patient.phone|default('N/A') }}</li>
+                </ul>
+            </div>
+            
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0"><i class="bi bi-journal-plus me-2"></i>Add New Clinical Notes</h5>
+                </div>
+                <div class="card-body">
+                    <form method="POST" action="{{ url_for('doctor_patient_view', patient_id=patient.patient_id) }}">
+                        <div class="mb-3">
+                            <label for="clinical_notes" class="form-label">Clinical Notes / Assessment</label>
+                            <textarea class="form-control" id="clinical_notes" name="clinical_notes" rows="5" required placeholder="Enter detailed findings, diagnosis, and treatment plan."></textarea>
+                        </div>
+                        <div class="mb-3">
+                            <label for="legacy_pill_schedule" class="form-label">Legacy/Manual Prescription (Optional, for history only)</label>
+                            <textarea class="form-control" id="legacy_pill_schedule" name="legacy_pill_schedule" rows="2" placeholder="e.g., Aspirin 81mg once daily"></textarea>
+                            <small class="form-text text-muted">Use the dedicated 'Medication Schedule' panel below for structured prescriptions.</small>
+                        </div>
+                        <button type="submit" class="btn btn-primary btn-block w-100">
+                            <i class="bi bi-save me-1"></i> Save Clinical Notes
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-8">
+            <div class="card shadow-sm mb-4 border-danger">
+                <div class="card-header bg-danger text-white">
+                    <h5 class="mb-0"><i class="bi bi-capsule me-2"></i>Prescribe New Medication Schedule</h5>
+                </div>
+                <div class="card-body">
+                    <form method="POST" action="{{ url_for('add_medication_schedule', patient_id=patient.patient_id) }}">
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label for="pill_name" class="form-label">Pill Name</label>
+                                <input type="text" class="form-control" id="pill_name" name="pill_name" required placeholder="e.g., Amoxicillin">
+                            </div>
+                            <div class="col-md-6">
+                                <label for="dosage" class="form-label">Dosage</label>
+                                <input type="text" class="form-control" id="dosage" name="dosage" required placeholder="e.g., 500mg">
+                            </div>
+                            <div class="col-md-6">
+                                <label for="timing_slot" class="form-label">Timing Slot</label>
+                                <select class="form-control" id="timing_slot" name="timing_slot" required>
+                                    <option value="">-- Select Time Slot --</option>
+                                    <option value="Morning">Morning (Approx 9 AM)</option>
+                                    <option value="Noon">Noon (Approx 1 PM)</option>
+                                    <option value="Evening">Evening (Approx 6 PM)</option>
+                                    <option value="Bedtime">Bedtime (Approx 10 PM)</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="duration_days" class="form-label">Duration (Days)</label>
+                                <input type="number" class="form-control" id="duration_days" name="duration_days" required min="1" placeholder="e.g., 7">
+                            </div>
+                            <div class="col-md-12">
+                                <label for="start_date" class="form-label">Start Date</label>
+                                <input type="date" class="form-control" id="start_date" name="start_date" required value="{{ now().strftime('%Y-%m-%d') }}">
+                            </div>
+                        </div>
+                        <button type="submit" class="btn btn-danger btn-block w-100 mt-4">
+                            <i class="bi bi-calendar-check me-1"></i> Finalize & Schedule Pill
+                        </button>
+                    </form>
+                </div>
+            </div>
+            
+            <h4 class="mb-3 text-secondary"><i class="bi bi-file-earmark-medical me-2"></i>Historical Clinical Records ({{ records|length }})</h4>
+            <div class="accordion" id="historyAccordion">
+            {% for record in records %}
+                <div class="accordion-item shadow-sm mb-2">
+                    <h2 class="accordion-header" id="histHeading{{ loop.index }}">
+                        <button class="accordion-button {% if loop.index != 1 %}collapsed{% endif %} bg-light" type="button" data-bs-toggle="collapse" data-bs-target="#histCollapse{{ loop.index }}" aria-expanded="{% if loop.index == 1 %}true{% else %}false{% endif %}" aria-controls="histCollapse{{ loop.index }}">
+                            <span class="badge bg-secondary me-2">Record #{{ (records|length) - loop.index0 }}</span> 
+                            <small class="text-muted">Logged by Dr. {{ record.doctor_name|default('Unknown') }} on {{ record.created_at.strftime('%Y-%m-%d') }}</small>
+                        </button>
+                    </h2>
+                    <div id="histCollapse{{ loop.index }}" class="accordion-collapse collapse {% if loop.index == 1 %}show{% endif %}" aria-labelledby="histHeading{{ loop.index }}" data-bs-parent="#historyAccordion">
+                        <div class="accordion-body bg-light">
+                            <p class="fw-bold">Doctor's Clinical Notes:</p>
+                            <div class="alert alert-secondary py-2 border-0">
+                                <p class="mb-0">{{ record.notes | nl2br }}</p>
+                            </div>
+
+                            {% if record.medication_schedules %}
+                                <p class="fw-bold mt-3">Structured Prescriptions & Daily Compliance:</p>
+                                <ul class="list-group list-group-flush mb-3 border rounded">
+                                {% for schedule in record.medication_schedules %}
+                                    {% set is_active_today = schedule.start_date <= today_date and schedule.end_date >= today_date %}
+                                    <li class="list-group-item d-flex justify-content-between align-items-center {% if schedule.taken_today %}list-group-item-success{% elif is_active_today %}list-group-item-warning{% else %}list-group-item-light{% endif %}">
+                                        <div>
+                                            <strong>{{ schedule.drug_name }}</strong> ({{ schedule.dosage }}) - {{ schedule.timing_slot }}
+                                            <br>
+                                            <small class="text-muted">
+                                                Start: {{ schedule.start_date.strftime('%Y-%m-%d') }} | End: {{ schedule.end_date.strftime('%Y-%m-%d') }}
+                                            </small>
+                                        </div>
+                                        {% if is_active_today %}
+                                            {% if schedule.taken_today %}
+                                                <span class="badge bg-success rounded-pill p-2"><i class="bi bi-check-circle-fill me-1"></i> TAKEN TODAY</span>
+                                            {% else %}
+                                                <span class="badge bg-danger rounded-pill p-2"><i class="bi bi-x-circle-fill me-1"></i> PENDING TODAY</span>
+                                            {% endif %}
+                                        {% else %}
+                                            <span class="badge bg-secondary rounded-pill p-2">COMPLETED</span>
+                                        {% endif %}
+                                    </li>
+                                {% endfor %}
+                                </ul>
+                            {% endif %}
+                            {% if record.pill_schedule %}
+                                <p class="fw-bold mt-3">Prescription Details (Legacy/Notes):</p>
+                                <pre class="p-2 bg-white border rounded small">{{ record.pill_schedule | nl2br }}</pre>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                {% else %}
+                <div class="alert alert-info text-center">
+                    No past records found in the database.
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+    <script>
+        // Utility to get today's date in YYYY-MM-DD format
+        function getTodayDate() {
+            const today = new Date();
+            const year = today.getFullYear();
+            const month = String(today.getMonth() + 1).padStart(2, '0');
+            const day = String(today.getDate()).padStart(2, '0');
+            return `${year}-${month}-${day}`;
+        }
+        
+        // Set the default start date for the prescription form
+        document.addEventListener('DOMContentLoaded', function() {
+            const startDateInput = document.getElementById('start_date');
+            if (startDateInput) {
+                // Flask already sets the default, but this is a good safeguard
+                if (!startDateInput.value) {
+                    startDateInput.value = getTodayDate();
+                }
+                // Ensure duration is a positive number
+                const durationInput = document.getElementById('duration_days');
+                if (durationInput) {
+                    durationInput.min = 1;
+                }
+            }
+        });
+    </script>
+{% endblock %}

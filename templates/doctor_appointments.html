@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+
+{% block title %}Manage Appointments{% endblock %}
+
+{% block content %}
+    <header class="page-header mb-4 pb-2 border-bottom">
+        <h1 class="h3 mb-0 text-success"><i class="bi bi-list-check me-2"></i>Pending Appointment Requests</h1>
+        <p class="text-muted">Review and confirm or reject incoming appointment requests.</p>
+    </header>
+
+    {% if appointments %}
+        <div class="card shadow-sm">
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover table-striped mb-0 align-middle">
+                        <thead class="table-success">
+                            <tr>
+                                <th scope="col">ID</th>
+                                <th scope="col">Patient Name</th>
+                                <th scope="col">Date</th>
+                                <th scope="col">Time</th>
+                                <th scope="col">Reason</th>
+                                <th scope="col">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for app in appointments %}
+                                <tr>
+                                    <td><span class="badge bg-secondary">{{ app.id }}</span></td>
+                                    <td>{{ app.patient_name }}</td>
+                                    <td>{{ app.appointment_date }}</td>
+                                    <td>{{ app.appointment_time }}</td>
+                                    <td>{{ app.reason|truncate(50) }}</td>
+                                    <td>
+                                        <form method="POST" action="{{ url_for('update_appointment_status', app_id=app.id, action='confirm') }}" class="d-inline">
+                                            <button type="submit" class="btn btn-sm btn-success me-2">
+                                                <i class="bi bi-check2"></i> Confirm
+                                            </button>
+                                        </form>
+                                        <form method="POST" action="{{ url_for('update_appointment_status', app_id=app.id, action='reject') }}" class="d-inline">
+                                            <button type="submit" class="btn btn-sm btn-danger">
+                                                <i class="bi bi-x"></i> Reject
+                                            </button>
+                                        </form>
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    {% else %}
+        <div class="alert alert-info text-center p-4">
+            <h4 class="alert-heading"><i class="bi bi-check2-all me-2"></i> No Pending Requests</h4>
+            <p class="mb-0">You are currently caught up! Check back later for new bookings.</p>
+        </div>
+    {% endif %}
+{% endblock %}

@@ -1,0 +1,80 @@
+{% extends "base.html" %}
+
+{% block title %}Provision New Doctor Account{% endblock %}
+
+{% block content %}
+    <header class="page-header mb-4 pb-2 border-bottom">
+        <h1 class="h3 mb-0 text-primary"><i class="bi bi-person-badge-fill me-2"></i>Provision New Doctor Account</h1>
+        <p class="text-muted">Create a secure login and clinical profile for a new medical staff member. This account will have full access to patient records.</p>
+    </header>
+
+    <div class="card shadow-lg">
+        <div class="card-header bg-primary text-white p-3">
+            <h5 class="mb-0"><i class="bi bi-clipboard-plus me-1"></i> Doctor Profile and Credentials Form</h5>
+        </div>
+        <div class="card-body p-5">
+            <form method="POST" action="{{ url_for('admin_add_doctor') }}" class="needs-validation" novalidate>
+                
+                <fieldset class="mb-5 p-4 border rounded border-dark">
+                    <legend class="float-none w-auto px-2 fs-6 text-dark fw-bold"><i class="bi bi-lock-fill me-1"></i> Account Credentials</legend>
+                    <div class="row g-4">
+                        <div class="col-md-6">
+                            <label for="doctor_id" class="form-label fw-bold">Doctor ID (Unique Login Identifier) <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control form-control-lg" id="doctor_id" name="doctor_id" required maxlength="10" placeholder="e.g., DOC-A101">
+                            <div class="form-text">This ID must be unique within the hospital registry.</div>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="password" class="form-label fw-bold">Temporary Password <span class="text-danger">*</span></label>
+                            <input type="password" class="form-control form-control-lg" id="password" name="password" required minlength="8" placeholder="Must be at least 8 characters">
+                            <div class="form-text text-danger">The doctor should change this immediately upon first login.</div>
+                        </div>
+                    </div>
+                </fieldset>
+                
+                <fieldset class="mb-5 p-4 border rounded border-primary bg-light">
+                    <legend class="float-none w-auto px-2 fs-6 text-primary fw-bold"><i class="bi bi-person-fill me-1"></i> Clinical Profile Information</legend>
+                    <div class="row g-4">
+                        <div class="col-md-6">
+                            <label for="name" class="form-label fw-bold">Full Name <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="name" name="name" required placeholder="Dr. Sarah Connor">
+                        </div>
+                        <div class="col-md-6">
+                            <label for="email" class="form-label fw-bold">Professional Email <span class="text-danger">*</span></label>
+                            <input type="email" class="form-control" id="email" name="email" required placeholder="s.connor@hospital.com">
+                            <div class="form-text text-muted">Used for internal hospital communication.</div>
+                        </div>
+                    </div>
+                    <div class="row g-4 mt-2">
+                        <div class="col-12">
+                            <label for="specialization" class="form-label fw-bold">Clinical Specialization <span class="text-danger">*</span></label>
+                            <select class="form-select form-select-lg" id="specialization" name="specialization" required>
+                                <option value="" disabled selected>-- Select Primary Specialty --</option>
+                                <option value="Cardiology">Cardiology</option>
+                                <option value="Neurology">Neurology</option>
+                                <option value="Pediatrics">Pediatrics</option>
+                                <option value="Oncology">Oncology</option>
+                                <option value="General Practice">General Practice</option>
+                                <option value="Emergency Medicine">Emergency Medicine</option>
+                                <option value="Orthopedics">Orthopedics</option>
+                                <option value="Dermatology">Dermatology</option>
+                                <option value="Psychiatry">Psychiatry</option>
+                                <option value="Other">Other / Specialist</option>
+                            </select>
+                            <div class="form-text text-muted">Determines how they can be assigned as a Primary Care Physician.</div>
+                        </div>
+                    </div>
+                </fieldset>
+
+                <div class="d-grid gap-2">
+                    <button type="submit" class="btn btn-primary btn-lg shadow-sm">
+                        <i class="bi bi-person-check-fill me-2"></i>Create Doctor Account and Profile
+                    </button>
+                    <a href="{{ url_for('admin_dashboard') }}" class="btn btn-outline-secondary">Cancel and Return to Dashboard</a>
+                </div>
+            </form>
+        </div>
+        <div class="card-footer text-muted small p-3">
+            Account provisioning process completed by **{{ user.name }}** ({{ user.role|capitalize }}) at {{ now().strftime('%Y-%m-%d %H:%M') }}.
+        </div>
+    </div>
+{% endblock %}

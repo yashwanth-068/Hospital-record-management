@@ -1,0 +1,38 @@
+version: '3.8'
+
+services:
+  db:
+    image: mysql:8.0
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD:-MYsqlpass@123}
+      MYSQL_DATABASE: ${DB_NAME:-health_record}
+    ports:
+      - "3306:3306"
+    volumes:
+      - db_data:/var/lib/mysql
+    networks:
+      - hospital-network
+  
+  app:
+    build: .
+    ports:
+      - "5000:5000"
+    environment:
+      DB_HOST: db
+      DB_USER: ${DB_USER:-root}
+      DB_PASSWORD: ${DB_PASSWORD:-MYsqlpass@123}
+      DB_NAME: ${DB_NAME:-health_record}
+      SECRET_KEY: ${SECRET_KEY:-change_this_in_production}
+      DEBUG: ${DEBUG:-False}
+    depends_on:
+      - db
+    networks:
+      - hospital-network
+    restart: unless-stopped
+
+volumes:
+  db_data:
+
+networks:
+  hospital-network:
+    driver: bridge

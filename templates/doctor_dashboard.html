@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+
+{% block title %}Doctor Dashboard: My Patients{% endblock %}
+
+{% block content %}
+<br>
+<br>
+<div class="container mt-4">
+    <header class="page-header d-flex justify-content-between align-items-center mb-4 pb-2 border-bottom">
+        <h1 class="h3 mb-0 text-primary"><i class="bi bi-person-badge me-2"></i>Welcome, Dr. {{ user.name }}</h1>
+        <small class="text-muted">{{ user.hospital_name }} (ID: {{ user.doctor_id }})</small>
+    </header>
+
+    <div class="row g-4">
+        <div class="col-lg-12">
+            <div class="card shadow-sm mb-4 border-info">
+                <div class="card-body">
+                    <h5 class="card-title text-info"><i class="bi bi-gear-fill me-2"></i>Dashboard Status</h5>
+                    <div class="d-flex justify-content-between align-items-center">
+                        <p class="mb-0">
+                            You have **{{ total_assigned }}** assigned patients on your panel.
+                        </p>
+                        <form method="POST" action="{{ url_for('toggle_doctor_availability_route') }}" class="d-inline">
+                            {% if doctor_is_available %}
+                                <button type="submit" class="btn btn-sm btn-success">
+                                    <i class="bi bi-check-circle me-1"></i> Accepting Appointments
+                                </button>
+                            {% else %}
+                                <button type="submit" class="btn btn-sm btn-danger">
+                                    <i class="bi bi-x-circle me-1"></i> Not Accepting Appointments
+                                </button>
+                            {% endif %}
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-12">
+            <a href="{{ url_for('manage_appointments') }}" class="btn btn-outline-primary mb-3">
+                <i class="bi bi-calendar-check me-2"></i> Manage Pending Appointments
+            </a>
+        </div>
+
+        <div class="col-lg-12">
+            <h4 class="mb-3 text-secondary"><i class="bi bi-people-fill me-2"></i>My Assigned Patients ({{ total_assigned }})</h4>
+
+            {% if patients %}
+                <div class="list-group shadow-sm">
+                    {% for patient in patients %}
+                        <a href="{{ url_for('doctor_patient_view', patient_id=patient.patient_id) }}" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
+                            <div>
+                                <h6 class="mb-1 text-primary">{{ patient.name }}</h6>
+                                <small class="text-muted">Card ID: <span class="fw-bold">{{ patient.patient_id }}</span> | DOB: {{ patient.dob|default('N/A') }}</small>
+                            </div>
+                            <span class="badge bg-primary rounded-pill">View Record <i class="bi bi-arrow-right"></i></span>
+                        </a>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div class="alert alert-info text-center">
+                    You currently do not have any patients assigned to your panel.
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,108 @@
+{% extends "base.html" %}
+
+{% block title %}Discharge & Final Billing for {{ patient.name }}{% endblock %}
+
+{% block content %}
+    <header class="page-header mb-4 pb-2 border-bottom">
+        <h1 class="h3 mb-0 text-danger"><i class="bi bi-file-earmark-medical-fill me-2"></i>Patient Discharge & Billing</h1>
+        <p class="text-muted">Finalize the patient's record, generate the GST bill, and prepare the mini-history for portability.</p>
+    </header>
+
+    <div class="row g-4">
+        
+        <div class="col-lg-5 order-lg-2">
+            <div class="card shadow-lg border-danger h-100">
+                <div class="card-header bg-danger text-white">
+                    <h5 class="mb-0"><i class="bi bi-currency-rupee me-1"></i> Final Bill Estimate (GST)</h5>
+                </div>
+                <div class="card-body p-4">
+                    <ul class="list-group list-group-flush mb-3">
+                        <li class="list-group-item d-flex justify-content-between">
+                            <span>**Patient ID:**</span>
+                            <span class="fw-bold">{{ patient.patient_id }}</span>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between">
+                            <span>**Admission Date:**</span>
+                            <span class="fw-bold">{{ billing_data.first_record_date|default('N/A') }}</span>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between">
+                            <span>**Estimated Treatment Days:**</span>
+                            <span class="fw-bold">{{ billing_data.estimated_treatment_days }}</span>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between">
+                            <span>**Consultation Count:**</span>
+                            <span class="fw-bold">{{ billing_data.consultation_count }}</span>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between">
+                            <span>**Primary Doctor:**</span>
+                            <span class="fw-bold">{{ billing_data.assigned_doctor_name }}</span>
+                        </li>
+                    </ul>
+
+                    <h6 class="mt-4 mb-3 border-bottom pb-1 text-danger">Cost Breakdown (INR)</h6>
+                    <ul class="list-group list-group-flush small">
+                        <li class="list-group-item d-flex justify-content-between">
+                            <span>Consultation Fees ({{ billing_data.consultation_count }} x ₹{{ "%.2f"|format(500.00) }}):</span>
+                            <span>₹{{ "%.2f"|format(billing_data.consultation_fee_total) }}</span>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between">
+                            <span>Treatment/Daily Charges ({{ billing_data.estimated_treatment_days }} days):</span>
+                            <span>₹{{ "%.2f"|format(billing_data.treatment_cost_total) }}</span>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between bg-light fw-bold">
+                            <span>Subtotal (A):</span>
+                            <span>₹{{ "%.2f"|format(billing_data.subtotal) }}</span>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between text-success">
+                            <span>**GST ({{ "%.0f"|format(billing_data.gst_rate * 100) }}% on A):**</span>
+                            <span class="fw-bold">₹{{ "%.2f"|format(billing_data.gst_amount) }}</span>
+                        </li>
+                    </ul>
+                </div>
+                <div class="card-footer bg-danger text-white d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">Total Due (INR)</h5>
+                    <h5 class="mb-0 fw-bold">₹{{ "%.2f"|format(billing_data.total_bill) }}</h5>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-7 order-lg-1">
+            <div class="card shadow-lg h-100">
+                <div class="card-header bg-dark text-white">
+                    <h5 class="mb-0">Final Discharge Details</h5>
+                </div>
+                <div class="card-body p-4">
+                    <form method="POST" action="{{ url_for('admin_discharge_patient', patient_db_id=patient.id) }}">
+                        
+                        <div class="mb-3">
+                            <label for="discharge_date" class="form-label fw-bold">Official Discharge Date <span class="text-danger">*</span></label>
+                            <input type="date" class="form-control" id="discharge_date" name="discharge_date" value="{{ today }}" required>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="treatment_summary" class="form-label fw-bold">Mini-History / Treatment Summary <span class="text-danger">*</span></label>
+                            <textarea class="form-control" id="treatment_summary" name="treatment_summary" rows="5" required
+                                placeholder="e.g., Patient was treated for Viral Pneumonia. Treatment involved 7 days of IV antibiotics and respiratory support. Patient is now fully recovered and breathing normally. State what was treated, and how they got fine."
+                            ></textarea>
+                            <div class="form-text">This content will be saved to the patient's card for portability (main content).</div>
+                        </div>
+
+                        <div class="mb-4">
+                            <label for="discharge_notes" class="form-label fw-bold">Doctor's Discharge Notes</label>
+                            <textarea class="form-control" id="discharge_notes" name="discharge_notes" rows="3"
+                                placeholder="e.g., Follow up with a GP in 14 days. Continue oral anti-inflammatories for 5 days. Avoid heavy lifting for 1 month."
+                            ></textarea>
+                            <div class="form-text">Any final notes for the patient and subsequent hospitals.</div>
+                        </div>
+                        
+                        <div class="d-grid">
+                            <button type="submit" class="btn btn-danger btn-lg">
+                                <i class="bi bi-file-earmark-check-fill me-2"></i> **FINALIZE DISCHARGE & GENERATE BILL**
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}

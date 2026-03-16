@@ -1,0 +1,85 @@
+{% extends "base.html" %}
+
+{% block title %}Create New Health Card{% endblock %}
+
+{% block content %}
+    <header class="page-header mb-4 pb-2 border-bottom">
+        <h1 class="h3 mb-0 text-primary"><i class="bi bi-credit-card me-2"></i>New Health Card Generation</h1>
+        <p class="text-muted">Fill out the form below to create a new patient record, unique ID, and secure access account.</p>
+    </header>
+
+    <div class="card shadow-lg">
+        <div class="card-header bg-primary text-white">
+            <h5 class="mb-0">Patient Registration & Credentials</h5>
+        </div>
+        <div class="card-body">
+            <form method="POST" action="{{ url_for('admin_add_patient') }}" class="needs-validation" novalidate>
+                
+                <fieldset class="mb-4 p-3 border rounded">
+                    <legend class="float-none w-auto px-2 fs-6 text-primary fw-bold"><i class="bi bi-lock-fill me-1"></i> Account Setup</legend>
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label for="patient_id" class="form-label">Patient ID <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="patient_id" name="patient_id" required maxlength="10" placeholder="e.g., PNT-2025-001">
+                            <div class="form-text text-muted">This ID must be **unique** within the hospital and will be used for patient login.</div>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="password" class="form-label">Temporary Login Password <span class="text-danger">*</span></label>
+                            <input type="password" class="form-control" id="password" name="password" required minlength="8" placeholder="Must be at least 8 characters">
+                            <div class="form-text text-muted">Secure password for the patient's first login. Must be communicated securely.</div>
+                        </div>
+                    </div>
+                </fieldset>
+                
+                <fieldset class="mb-4 p-3 border rounded">
+                    <legend class="float-none w-auto px-2 fs-6 text-primary fw-bold"><i class="bi bi-person-vcard-fill me-1"></i> Personal Details</legend>
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label for="name" class="form-label">Full Name <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="name" name="name" required placeholder="Last Name, First Name">
+                        </div>
+                        <div class="col-md-6">
+                            <label for="dob" class="form-label">Date of Birth <span class="text-danger">*</span></label>
+                            <input type="date" class="form-control" id="dob" name="dob" max="{{ now().strftime('%Y-%m-%d') }}" required>
+                            <div class="form-text text-muted">Required for age calculation and demographic records.</div>
+                        </div>
+                    </div>
+                    <div class="row g-3 mt-1">
+                        <div class="col-12">
+                            <label for="address" class="form-label">Residential Address</label>
+                            <textarea class="form-control" id="address" name="address" rows="2" placeholder="Street address, City, Postal Code..."></textarea>
+                            <div class="form-text text-muted">Primary mailing and contact address.</div>
+                        </div>
+                    </div>
+                </fieldset>
+
+                <fieldset class="mb-4 p-3 border rounded bg-light">
+                    <legend class="float-none w-auto px-2 fs-6 text-primary fw-bold"><i class="bi bi-hospital-fill me-1"></i> Doctor Assignment</legend>
+                    <div class="row g-3">
+                        <div class="col-12">
+                            <label for="assigned_doctor_db_id" class="form-label">Assign Primary Care Physician (PCP)</label>
+                            <select class="form-select" id="assigned_doctor_db_id" name="assigned_doctor_db_id">
+                                <option value="">-- No Primary Doctor Assigned (Select below) --</option>
+                                {% for doctor in doctors %}
+                                    <option value="{{ doctor.id }}">
+                                        Dr. {{ doctor.name }} | {{ doctor.specialization|default('General') }} (ID: {{ doctor.doctor_id }})
+                                    </option>
+                                {% else %}
+                                    <option value="" disabled>No doctors available for assignment. Please create a doctor account first.</option>
+                                {% endfor %}
+                            </select>
+                            <div class="form-text text-muted">The assigned doctor will have immediate access to view and update this patient's records.</div>
+                        </div>
+                    </div>
+                </fieldset>
+
+                <div class="d-grid gap-2">
+                    <button type="submit" class="btn btn-primary btn-lg">
+                        <i class="bi bi-save-fill me-2"></i>Finalize Card Creation
+                    </button>
+                    <a href="{{ url_for('admin_dashboard') }}" class="btn btn-outline-secondary">Cancel and Return to Dashboard</a>
+                </div>
+            </form>
+        </div>
+    </div>
+{% endblock %}
